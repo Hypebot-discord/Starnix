@@ -1,0 +1,19 @@
+{
+  "name": "starnix-bot",
+  "version": "1.0.0",
+  "description": "Bot Discord Starnix - Bot assistant avec gestion de maintenance",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": ["discord", "bot", "javascript"],
+  "author": "Votre nom",
+  "license": "MIT"
+}
