@@ -1,25 +1,28 @@
+require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
 
-// Créer l'application Express pour l'endpoint de ping
+// Configuration Express pour l'endpoint ping
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Endpoint de ping pour maintenir le service actif
+// Endpoint de ping pour Render
 app.get('/ping', (req, res) => {
     res.status(200).json({ 
-        status: 'alive', 
+        status: 'ok', 
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        bot_status: client.isReady() ? 'online' : 'offline'
     });
 });
 
+// Endpoint racine
 app.get('/', (req, res) => {
     res.status(200).json({ 
-        message: 'Bot Discord en ligne',
-        status: 'running'
+        message: 'Starnix Bot is running!',
+        status: client.isReady() ? 'online' : 'offline'
     });
 });
 
@@ -43,13 +46,14 @@ client.commands = new Collection();
 
 // Charger les commandes
 const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-
-for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
-    const command = require(filePath);
-    if ('data' in command && 'execute' in command) {
-        client.commands.set(command.data.name, command);
+if (fs.existsSync(commandsPath)) {
+    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+    for (const file of commandFiles) {
+        const filePath = path.join(commandsPath, file);
+        const command = require(filePath);
+        if ('data' in command && 'execute' in command) {
+            client.commands.set(command.data.name, command);
+        }
     }
 }
 
@@ -132,13 +136,19 @@ client.on(Events.InteractionCreate, async interaction => {
 
 // Gestion des erreurs non capturées
 process.on('unhandledRejection', error => {
-    console.error('❌ Erreur non gérée:', error);
+    console.error('Unhandled promise rejection:', error);
 });
 
 process.on('uncaughtException', error => {
-    console.error('❌ Exception non capturée:', error);
+    console.error('Uncaught exception:', error);
     process.exit(1);
 });
 
 // Connexion du bot avec le token depuis les variables d'environnement
-client.login(process.env.DISCORD_TOKEN);
+const token = process.env.DISCORD_TOKEN;
+if (!token) {
+    console.error('❌ DISCORD_TOKEN non trouvé dans les variables d\'environnement !');
+    process.exit(1);
+}
+
+client.login(token);
