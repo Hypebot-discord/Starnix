@@ -1,6 +1,32 @@
 const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
+const express = require('express');
 const fs = require('fs');
 const path = require('path');
+
+// Créer l'application Express pour l'endpoint de ping
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Endpoint de ping pour maintenir le service actif
+app.get('/ping', (req, res) => {
+    res.status(200).json({ 
+        status: 'alive', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
+app.get('/', (req, res) => {
+    res.status(200).json({ 
+        message: 'Bot Discord en ligne',
+        status: 'running'
+    });
+});
+
+// Démarrer le serveur Express
+app.listen(PORT, () => {
+    console.log(`🌐 Serveur HTTP démarré sur le port ${PORT}`);
+});
 
 const client = new Client({
     intents: [
@@ -78,10 +104,9 @@ client.on(Events.ClientReady, () => {
 
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand()) return;
-
     const command = interaction.client.commands.get(interaction.commandName);
     if (!command) return;
-
+    
     // Vérifier les autorisations
     if (!checkPermissions(interaction.user.id, interaction.commandName)) {
         return interaction.reply({
@@ -89,7 +114,7 @@ client.on(Events.InteractionCreate, async interaction => {
             ephemeral: true
         });
     }
-
+    
     try {
         await command.execute(interaction);
     } catch (error) {
@@ -105,4 +130,15 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 });
 
-client.login('');
+// Gestion des erreurs non capturées
+process.on('unhandledRejection', error => {
+    console.error('❌ Erreur non gérée:', error);
+});
+
+process.on('uncaughtException', error => {
+    console.error('❌ Exception non capturée:', error);
+    process.exit(1);
+});
+
+// Connexion du bot avec le token depuis les variables d'environnement
+client.login(process.env.DISCORD_TOKEN);
